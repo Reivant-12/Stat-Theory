@@ -1,0 +1,106 @@
+---
+title: "FA8"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(car)
+library(knitr)
+```
+
+```{r}
+cloak <- read_csv("Invisibility Cloak.csv")
+
+cloak <- cloak %>%
+  mutate(
+    Cloak = factor(Cloak,
+                   levels = c(0,1),
+                   labels = c("Without a cloak","With a cloak"))
+  )
+
+# ASSUMPTION 1: CONTINUOUS DV
+is.numeric(cloak$Mischief)
+
+# ASSUMPTION 2: TWO GROUPS
+levels(cloak$Cloak)
+nlevels(cloak$Cloak)
+table(cloak$Cloak)
+
+# ASSUMPTION 3: INDEPENDENCE
+nrow(cloak)
+length(unique(cloak$Participant))
+any(duplicated(cloak$Participant))
+
+# ASSUMPTION 4: OUTLIERS
+ggplot(cloak, aes(x=Cloak, y=Mischief)) + geom_boxplot()
+
+cloak %>%
+  group_by(Cloak) %>%
+  summarise(
+    Q1 = quantile(Mischief,0.25),
+    Q3 = quantile(Mischief,0.75),
+    IQR = IQR(Mischief),
+    Lower = Q1 - 1.5*IQR,
+    Upper = Q3 + 1.5*IQR
+  )
+
+cloak %>%
+  group_by(Cloak) %>%
+  filter(
+    Mischief < quantile(Mischief,0.25) - 1.5*IQR(Mischief) |
+    Mischief > quantile(Mischief,0.75) + 1.5*IQR(Mischief)
+  )
+
+# ASSUMPTION 5: NORMALITY
+by(cloak$Mischief, cloak$Cloak, shapiro.test)
+
+ggplot(cloak, aes(x=Mischief)) +
+  geom_histogram(bins=8) +
+  facet_wrap(~Cloak)
+
+# HOMOGENEITY OF VARIANCE
+leveneTest(Mischief ~ Cloak, data=cloak)
+
+# DESCRIPTIVE STATISTICS
+descriptives <- cloak %>%
+  group_by(Cloak) %>%
+  summarise(
+    n = n(),
+    Mean = mean(Mischief),
+    SD = sd(Mischief),
+    Min = min(Mischief),
+    Max = max(Mischief)
+  )
+kable(descriptives, digits=2)
+
+# T-TEST
+t_result <- t.test(Mischief ~ Cloak, data=cloak, var.equal=TRUE)
+t_result
+
+# APA REPORT
+m1 <- mean(cloak$Mischief[cloak$Cloak=="Without a cloak"])
+sd1 <- sd(cloak$Mischief[cloak$Cloak=="Without a cloak"])
+
+m2 <- mean(cloak$Mischief[cloak$Cloak=="With a cloak"])
+sd2 <- sd(cloak$Mischief[cloak$Cloak=="With a cloak"])
+
+t_value <- unname(t_result$statistic)
+df_value <- unname(t_result$parameter)
+p_value <- unname(t_result$p.value)
+ci_low <- t_result$conf.int[1]
+ci_high <- t_result$conf.int[2]
+
+cat(
+"An independent-samples t-test was conducted to determine whether wearing an invisibility cloak affected mischievous behavior. ",
+"Participants without a cloak (M = ", round(m1,2), ", SD = ", round(sd1,2),
+") and participants with a cloak (M = ", round(m2,2), ", SD = ", round(sd2,2),
+") did not differ significantly, t(", round(df_value,0), ") = ", round(t_value,2),
+", p = ", format(round(p_value,3), nsmall=3),
+", 95% CI [", round(ci_low,2), ", ", round(ci_high,2), "]. ",
+sep=""
+)
+```
