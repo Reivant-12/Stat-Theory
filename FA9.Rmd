@@ -1,0 +1,91 @@
+---
+title: "FA 9 - Statistical Theory"
+author: "Your Name"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+# Problem 1: Chi-Square Goodness-of-Fit Test
+
+We test whether the coins are fair.
+
+## Step 1: Hypotheses
+
+- $H_0$: Coins are fair (observed = expected)
+- $H_a$: Coins are not fair
+
+## Step 2: Data
+
+```{r}
+observed <- c(24, 108, 95, 23)
+expected <- c(30, 90, 90, 30)
+
+chi_sq <- sum((observed - expected)^2 / expected)
+chi_sq
+
+p_value <- 1 - pchisq(chi_sq, df = 3)
+p_value
+
+obs <- matrix(c(72,17,64,23), nrow=2, byrow=TRUE)
+colnames(obs) <- c("Passed","Failed")
+rownames(obs) <- c("Class A","Class B")
+obs
+
+chisq.test(obs, correct=FALSE)
+
+chisq.test(obs, correct=TRUE)
+
+obs <- matrix(c(49,25,30,96), nrow=2, byrow=TRUE)
+obs
+
+chi <- chisq.test(obs, correct=FALSE)$statistic
+n <- sum(obs)
+C <- sqrt(chi / (chi + n))
+C
+
+chi_yates <- chisq.test(obs, correct=TRUE)$statistic
+C_yates <- sqrt(chi_yates / (chi_yates + n))
+C_yates
+
+Cmax <- sqrt((2-1)/2)
+Cmax
+
+data(mtcars)
+
+model1 <- lm(mpg ~ wt, data=mtcars)
+summary(model1)
+
+model2 <- lm(wt ~ mpg, data=mtcars)
+summary(model2)
+
+plot(mtcars$wt, mtcars$mpg,
+     main="Regression Lines",
+     xlab="Weight", ylab="MPG")
+
+abline(model1, col="blue")
+
+data(cars)
+
+plot(cars$speed, cars$dist,
+     main="Stopping Distance vs Speed",
+     xlab="Speed", ylab="Distance")
+
+quad_model <- lm(dist ~ speed + I(speed^2), data=cars)
+summary(quad_model)
+
+plot(cars$speed, cars$dist)
+curve(predict(quad_model,
+      newdata=data.frame(speed=x)),
+      add=TRUE)
+
+predict(quad_model, newdata=data.frame(speed=45))
+predict(quad_model, newdata=data.frame(speed=80))
+
+lin_model <- lm(dist ~ speed, data=cars)
+abline(lin_model)
+
+summary(lin_model)$r.squared
+summary(quad_model)$r.squared
+
+
+
