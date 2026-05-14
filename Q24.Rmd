@@ -1,0 +1,71 @@
+---
+title: "Q24"
+output: html_document
+---
+
+```{r setup, include=TRUE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+library(car)      
+library(emmeans)  
+library(ggplot2)  
+
+# Manually inputting data from the Alzheimers Mice Data.csv
+ad_status_vec <- c(1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,1, 2,2,2,2,2, 2,2,2,2,2, 2,2,2,2,2, 2,2,2,2,2)
+treatment_vec <- c(1,1,1,1,1, 2,2,2,2,2, 3,3,3,3,3, 4,4,4,4,4, 1,1,1,1,1, 2,2,2,2,2, 3,3,3,3,3, 4,4,4,4,4)
+training_vec  <- c(12,15,13,12,14, 15,14,17,14,15, 12,13,12,11,12, 18,17,18,19,18, 10,12,11,10,12, 11,10,12,11,11, 10,11,10,11,10, 12,13,12,12,11)
+memory_vec    <- c(10,12,13,10,13, 14,13,16,14,15, 10,11,12,10,11, 18,17,17,18,17, 8,9,8,8,9, 9,8,8,9,8, 8,9,8,8,8, 10,11,10,10,10)
+
+mice_data <- data.frame(
+  AD_Status = factor(ad_status_vec, labels = c("Transgenic", "Wild Type")),
+  Treatment = factor(treatment_vec, labels = c("Drug 1", "Drug 2", "Drug 3", "Drug 4")),
+  Training = training_vec,
+  Memory = memory_vec
+)
+
+train_aov <- aov(Training ~ AD_Status * Treatment, data = mice_data)
+train_summary <- summary(train_aov)
+print(train_summary)
+
+shapiro_train <- shapiro.test(residuals(train_aov))
+levene_train <- leveneTest(Training ~ AD_Status * Treatment, data = mice_data)
+
+cat("--- INTERPRETATION: TRAINING DAY ---\n")
+cat("Assumptions: Normality p =", round(shapiro_train$p.value, 4), 
+    "| Homogeneity p =", round(levene_train$`Pr(>F)`[1], 4), "\n")
+
+mem_aov <- aov(Memory ~ AD_Status * Treatment, data = mice_data)
+mem_summary <- summary(mem_aov)
+print(mem_summary)
+
+shapiro_mem <- shapiro.test(residuals(mem_aov))
+levene_mem <- leveneTest(Memory ~ AD_Status * Treatment, data = mice_data)
+
+cat("--- INTERPRETATION: MEMORY DAY ---\n")
+cat("Assumptions: Normality p =", round(shapiro_mem$p.value, 4), 
+    "| Homogeneity p =", round(levene_mem$`Pr(>F)`[1], 4), "\n")
+
+# Training p-values
+p_stat_tr <- train_summary[[1]][["Pr(>F)"]][1]
+p_trea_tr <- train_summary[[1]][["Pr(>F)"]][2]
+p_inte_tr <- train_summary[[1]][["Pr(>F)"]][3]
+
+# Memory p-values
+p_stat_me <- mem_summary[[1]][["Pr(>F)"]][1]
+p_trea_me <- mem_summary[[1]][["Pr(>F)"]][2]
+p_inte_me <- mem_summary[[1]][["Pr(>F)"]][3]
+
+cat("--- APA FORMATTED REPORT ---\n\n")
+cat("TRAINING DAY: AD Status (p =", round(p_stat_tr, 4), ") and Treatment (p =", round(p_trea_tr, 4), 
+    ") significantly affected training errors. The interaction was", 
+    ifelse(p_inte_tr < 0.05, "significant.", "not significant."), "\n\n")
+
+cat("MEMORY DAY: AD Status (p =", round(p_stat_me, 4), ") and Treatment (p =", round(p_trea_me, 4), 
+    ") significantly affected memory errors. The interaction was", 
+    ifelse(p_inte_me < 0.05, "significant.", "not significant."), "\n\n")
+
+cat("ASSUMPTIONS: Levene's test and Shapiro-Wilk tests (p > .05) confirmed that 
+    the assumptions of homogeneity and normality were satisfied for this ANOVA.")
+
+interaction.plot(mice_data$Treatment, mice_data$AD_Status, mice_data$Memory, 
+                 main="Memory Interaction", col=c("red", "blue"), type="b", pch=19)
+

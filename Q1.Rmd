@@ -1,0 +1,110 @@
+---
+title: "Q1"
+output: html_document
+---
+
+```{r setup, include=TRUE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+# a. Hypotheses
+cat("a. Hypotheses:\n")
+cat("   H0: The observed frequencies follow the expected binomial distribution.\n")
+cat("   Ha: The observed frequencies do not follow the expected binomial distribution.\n\n")
+
+# Data
+observed <- c(24, 108, 95, 23)
+expected <- c(30, 90, 90, 30)
+
+# b. Compute Chi-Square Statistic
+chi_sq_val <- sum((observed - expected)^2 / expected)
+df_q1 <- length(observed) - 1
+p_val_q1 <- pchisq(chi_sq_val, df = df_q1, lower.tail = FALSE)
+
+cat("b. Computations:\n")
+cat("   Chi-Square Statistic:", round(chi_sq_val, 2), "\n")
+cat("   Degrees of Freedom:", df_q1, "\n")
+cat("   P-value:", round(p_val_q1, 4), "\n\n")
+
+# c. Decision and Interpretation
+cat("c. Decision and Interpretation:\n")
+alpha <- 0.05
+if(p_val_q1 < alpha) {
+  cat("   Decision: Reject the Null Hypothesis (p < 0.05).\n")
+  cat("   Interpretation: There is significant evidence that the observed frequencies 
+       differ from the expected binomial distribution.\n")
+} else {
+  cat("   Decision: Fail to Reject the Null Hypothesis.\n")
+  cat("   Interpretation: The observed frequencies do not significantly differ from 
+       the expected results.\n")
+}
+
+# Create Table
+vaccine_table <- matrix(c(9, 17, 42, 28), nrow = 2,
+                        dimnames = list(Vaccination = c("Vaccinated", "Not Vaccinated"),
+                                        Occurrence = c("Got Disease", "Did Not Get Disease")))
+
+# a. Compute Expected Frequencies
+test_q2 <- chisq.test(vaccine_table, correct = FALSE)
+cat("a. Expected Frequencies:\n")
+print(round(test_q2$expected, 2))
+cat("\n")
+
+# b. Perform Chi-Square Test
+cat("b. Chi-Square Test Results:\n")
+print(test_q2)
+
+# c. Interpret results
+cat("\nc. Interpretation:\n")
+if(test_q2$p.value < 0.05) {
+  cat("   Since p-value =", round(test_q2$p.value, 4), "is less than 0.05, we reject 
+       the hypothesis of independence.\n")
+  cat("   Vaccination and disease occurrence are significantly related (dependent).\n")
+} else {
+  cat("   Since p-value > 0.05, vaccination and disease occurrence are independent.\n")
+}
+
+sleep_table <- matrix(c(44, 81, 10, 35), nrow = 2,
+                      dimnames = list(Group = c("Sleeping Pills", "Sugar Pills"),
+                                      Result = c("Slept Well", "Did Not Sleep Well")))
+
+# a. Perform test
+test_q3 <- chisq.test(sleep_table, correct = FALSE)
+cat("a. Chi-Square Test Results:\n")
+print(test_q3)
+
+# b. Practical Interpretation
+cat("\nb. Practical Interpretation:\n")
+if(test_q3$p.value < 0.05) {
+  cat("   There is a statistically significant difference in sleep quality between 
+       the pill groups.\n")
+} else {
+  cat("   With a p-value of", round(test_q3$p.value, 4), ", there is no significant 
+       difference between the sleeping pill and the sugar pill (placebo effect).\n")
+}
+
+eye_hair_table <- matrix(c(49, 30, 25, 96), nrow = 2,
+                         dimnames = list(EyeColor = c("Blue", "Not Blue"),
+                                         HairColor = c("Blonde", "Not Blonde")))
+
+# a. Compute Coefficient of Contingency (C)
+test_q4 <- chisq.test(eye_hair_table, correct = FALSE)
+chi2_val <- as.numeric(test_q4$statistic)
+n <- sum(eye_hair_table)
+C <- sqrt(chi2_val / (chi2_val + n))
+
+cat("a. Computations:\n")
+cat("   Chi-Square Statistic:", round(chi2_val, 2), "\n")
+cat("   Coefficient of Contingency (C):", round(C, 4), "\n\n")
+
+# b. Interpret the strength
+cat("b. Interpretation of Association Strength:\n")
+if(C < 0.3) {
+  strength <- "Weak"
+} else if(C < 0.5) {
+  strength <- "Moderate"
+} else {
+  strength <- "Strong"
+}
+cat("   The Coefficient of Contingency is", round(C, 2), "which indicates a", 
+    strength, "relationship between eye color and hair color.\n")
+

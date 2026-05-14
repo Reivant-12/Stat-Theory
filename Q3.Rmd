@@ -1,0 +1,70 @@
+---
+title: "Q3"
+output: html_document
+---
+
+```{r setup, include=TRUE}
+# Global options to ensure code and results are visible
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+# Input Data
+x1 <- c(3, 5, 6, 8, 12, 14)
+x2 <- c(16, 10, 7, 4, 3, 2)
+x3 <- c(90, 72, 54, 42, 30, 12)
+df1 <- data.frame(x1, x2, x3)
+
+# a. Least-squares regression equation
+model1 <- lm(x3 ~ x1 + x2, data = df1)
+intercept <- coef(model1)[1]
+b1 <- coef(model1)[2]
+b2 <- coef(model1)[3]
+
+cat("a. Regression Equation:\n")
+cat(paste0("X3 = ", round(intercept, 2), " + (", round(b1, 2), ")X1 + (", round(b2, 2), ")X2\n\n"))
+
+# b. Estimate X3 when X1 = 10 and X2 = 6
+new_data <- data.frame(x1 = 10, x2 = 6)
+prediction <- predict(model1, newdata = new_data)
+
+cat("b. Prediction:\n")
+cat("For X1 = 10 and X2 = 6, estimated X3 is:", round(prediction, 2), "\n")
+
+# Residual standard error represents the standard error of estimate
+se_estimate <- summary(model1)$sigma
+
+cat("Standard Error of Estimate (S_x3.12):", round(se_estimate, 2), "\n")
+
+# R is the square root of R-squared
+r_squared <- summary(model1)$r.squared
+R_multiple <- sqrt(r_squared)
+
+cat("Coefficient of Multiple Determination (R^2):", round(r_squared, 4), "\n")
+cat("Coefficient of Multiple Correlation (R):", round(R_multiple, 4), "\n")
+
+# Using the formula for partial correlation or the 'ppcor' logic manually
+# r12.3 = (r12 - r13*r23) / sqrt((1-r13^2)(1-r23^2))
+r12 <- cor(x1, x2)
+r13 <- cor(x1, x3)
+r23 <- cor(x2, x3)
+
+r12_3 <- (r12 - (r13 * r23)) / sqrt((1 - r13^2) * (1 - r23^2))
+
+cat("Partial Correlation Coefficient (r12.3):", round(r12_3, 4), "\n")
+
+# Housing Data
+price <- c(165, 200, 225, 180, 202, 250, 275, 300, 155, 230)
+bedrooms <- c(3, 3, 4, 2, 4, 4, 3, 5, 2, 4)
+baths <- c(2, 3, 3, 3, 2, 4, 4, 3, 2, 4)
+df_house <- data.frame(price, bedrooms, baths)
+
+# a. Regression model
+model_house <- lm(price ~ bedrooms + baths, data = df_house)
+cat("a. Housing Regression Model:\n")
+print(summary(model_house)$coefficients)
+
+# b. Estimate price for 5 bedrooms and 4 baths
+new_house <- data.frame(bedrooms = 5, baths = 4)
+pred_house <- predict(model_house, newdata = new_house)
+
+cat("\nb. Estimation:\n")
+cat("The estimated price for a house with 5 bedrooms and 4 baths is:", round(pred_house, 2), "\n")
